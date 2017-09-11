@@ -124,6 +124,30 @@ def getCatalog(identifier=None):
 
 
 @http_body_factory
+def getCatalogByClassIds(classIds=[]):
+    print classIds
+    authInfo = _getUcsAuthInfo(request.headers)
+    handle = UcsHandle(*authInfo, secure=False)
+    if handle.login():
+        try:
+            result = {}
+            data = handle.query_classids(*classIds)
+            for key, value in data.items():
+                collection = []
+                if(type(value) == list):
+                    for item in value:
+                        collection.append(reduce(item.__dict__))
+                result[key] = collection
+            return result
+        except UcsException as e:
+            handle.logout()
+            return 'Internal Server Error', e.error_descr, 500
+    else:
+        handle.logout()
+        return 'Forbidden', '', 403
+
+
+@http_body_factory
 def getChassis():
     authInfo = _getUcsAuthInfo((request.headers))
     data = []
